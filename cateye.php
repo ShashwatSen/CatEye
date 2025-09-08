@@ -455,7 +455,7 @@ askscan:
                         echo $lblue . "[i] Release Date        : " . $fgreen . $vuln_array[$wp_c_version]["release_date"] . "\n";
                         echo $lblue . "[i] Changelog URL       : " . $fgreen . $vuln_array[$wp_c_version]["changelog_url"] . "\n";
                         echo $lblue . "[i] Vulnerability Count : " . $fgreen . count($vuln_array[$wp_c_version]["vulnerabilities"]) . "\n";
-                        if (count($vuln_array[$wp_c_version]["vulnerabilities"]) != "0") {
+                        if (count($vuln_array[$wp_c_version["vulnerabilities"]]) != "0") {
                             echo $yellow . "\n\t Version Vulnerabilities \n\t=========================\n\n";
                             $ver_vuln_array = $vuln_array[$wp_c_version]['vulnerabilities'];
                             foreach ($ver_vuln_array as $vuln_s) {
@@ -603,39 +603,44 @@ askscan:
             echo $bold . $yellow . "[S] Scan Type : Advanced Link Crawler" . $cln;
             echo "\n\n";
 
-            // Get all links from the page
-            $html = file_get_contents($reallink);
-            $dom = new DOMDocument();
-            @$dom->loadHTML($html);
-            $links = $dom->getElementsByTagName('a');
+            // Get all links from the page using the advanced function
+            $html = readcontents($reallink);
+            $link_categories = advanced_link_crawl($html, $reallink);
             
-            $internalLinks = [];
-            $externalLinks = [];
-            $resourceLinks = [];
-
-            foreach ($links as $link) {
-                $href = $link->getAttribute('href');
-                if (empty($href)) continue;
-                
-                // Categorize links
-                if (strpos($href, $ip) !== false) {
-                    $internalLinks[] = $href;
-                } elseif (strpos($href, 'http') === 0) {
-                    $externalLinks[] = $href;
-                } else {
-                    $resourceLinks[] = $href;
-                }
-            }
+            $internalLinks = $link_categories['internal'];
+            $externalLinks = $link_categories['external'];
+            $resourceLinks = $link_categories['resources'];
 
             // Display results
             echo $bold . $lblue . "[i] Internal Links Found: " . $green . count($internalLinks) . $cln . "\n";
             echo $bold . $lblue . "[i] External Links Found: " . $green . count($externalLinks) . $cln . "\n";
             echo $bold . $lblue . "[i] Resource Links Found: " . $green . count($resourceLinks) . $cln . "\n\n";
 
-            // Show sample links
-            echo $bold . $yellow . "Sample Internal Links:\n" . $cln;
-            for ($i = 0; $i < min(5, count($internalLinks)); $i++) {
-                echo $green . $internalLinks[$i] . $cln . "\n";
+            // Show all internal links
+            if (count($internalLinks) > 0) {
+                echo $bold . $yellow . "Internal Links:\n" . $cln;
+                foreach ($internalLinks as $link) {
+                    echo $green . $link . $cln . "\n";
+                }
+                echo "\n";
+            }
+
+            // Show all external links
+            if (count($externalLinks) > 0) {
+                echo $bold . $yellow . "External Links:\n" . $cln;
+                foreach ($externalLinks as $link) {
+                    echo $blue . $link . $cln . "\n";
+                }
+                echo "\n";
+            }
+
+            // Show all resource links
+            if (count($resourceLinks) > 0) {
+                echo $bold . $yellow . "Resource Links:\n" . $cln;
+                foreach ($resourceLinks as $link) {
+                    echo $magenta . $link . $cln . "\n";
+                }
+                echo "\n";
             }
 
             echo "\n" . $bold . $yellow . "[*] Scanning Complete. Press Enter To Continue OR CTRL + C To Stop\n\n";
