@@ -16,13 +16,15 @@ function cateye_banner()
 {
     system("clear");
     echo $bold . $magenta;
-    echo "   ______      __ ______ ______   ______ ______ ______ \n";
-    echo "  / ____/___  / // ____// ____/  / ____// ____// ____/ \n";
-    echo " / /    / __ \\/ // /_   / __/    / __/  / __/  / /_     \n";
-    echo "/ /___ / /_/ / // __/  / /___   / /___ / /___ / __/     \n";
-    echo "\\____/ \\____/_//_/    /_____/  /_____//_____//_/        \n";
+    echo "       
+      /\     /\                     ███████ ███████  ███████ ███████ ██  ██ ███████\n
+     /  \~~~/. \                    ██   ██ ██   ██    ██    ██      ██  ██ ██  \n
+    (    . .    )                   ██      ███████    ██    █████   ██████ █████\n
+     \__\_v_/__/                    ██   ██ ██   ██    ██    ██        ██   ██  \n
+        /   \                       ███████ ██   ██    ██    ███████   ██   ███████ \n
+       (_____)     \n";
     echo $bold . $lblue . "\n        Advanced Web Reconnaissance Tool\n";
-    echo $bold . $yellow . "        Version: $rhversion | By Tuhinshubhra\n";
+    echo $bold . $yellow . "        Version: $rhversion | By OPCAT and SID7\n";
     echo $bold . $white . "        Rebranded as CATEYE with Enhanced Features\n\n";
     echo $cln;
 }
