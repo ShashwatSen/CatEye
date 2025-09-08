@@ -22,7 +22,7 @@ function cateye_banner()
     echo "/ /___ / /_/ / // __/  / /___   / /___ / /___ / __/     \n";
     echo "\\____/ \\____/_//_/    /_____/  /_____//_____//_/        \n";
     echo $bold . $lblue . "\n        Advanced Web Reconnaissance Tool\n";
-    echo $bold . $yellow . "        Version: $rhversion | By Tuhinshubhra\n";
+    echo $bold . $yellow . "        Version: $rhversion | By Sid&Cat\n";
     echo $bold . $white . "        Rebranded as CATEYE with Enhanced Features\n\n";
     echo $cln;
 }
