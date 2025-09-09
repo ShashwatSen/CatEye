@@ -6,6 +6,7 @@ echo $cln;
 
 function update()
 {
+    global $cln, $bold, $fgreen;
     echo "\n\e[91m\e[1m[+] CATEYE UPDATE UTILITY [+]\nUpdate in progress, please wait...\n\n$cln";
     system("git fetch origin && git reset --hard origin/master && git clean -f -d");
     echo $bold . $fgreen . "[i] Job finished successfully! Please Restart CATEYE \n" . $cln;
@@ -15,14 +16,17 @@ function update()
 function cateye_banner()
 {
     system("clear");
+    global $bold, $magenta, $lblue, $yellow, $white, $cln;
     echo $bold . $magenta;
-    echo "   ______      __ ______ ______   ______ ______ ______ \n";
-    echo "  / ____/___  / // ____// ____/  / ____// ____// ____/ \n";
-    echo " / /    / __ \\/ // /_   / __/    / __/  / __/  / /_     \n";
-    echo "/ /___ / /_/ / // __/  / /___   / /___ / /___ / __/     \n";
-    echo "\\____/ \\____/_//_/    /_____/  /_____//_____//_/        \n";
+    echo "       
+      /\     /\                     ███████ ███████  ███████ ███████ ██  ██ ███████\n
+     /  \~~~/. \                    ██   ██ ██   ██    ██    ██      ██  ██ ██  \n
+    (    . .    )                   ██      ███████    ██    █████   ██████ █████\n
+     \__\_v_/__/                    ██   ██ ██   ██    ██    ██        ██   ██  \n
+        /   \                       ███████ ██   ██    ██    ███████   ██   ███████ \n
+       (_____)     \n";
     echo $bold . $lblue . "\n        Advanced Web Reconnaissance Tool\n";
-    echo $bold . $yellow . "        Version: $rhversion | By Sid&Cat\n";
+    echo $bold . $yellow . "        Version: $rhversion | By OPCAT and SID7\n";
     echo $bold . $white . "        Rebranded as CATEYE with Enhanced Features\n\n";
     echo $cln;
 }
@@ -78,7 +82,7 @@ if ($ip == "help") {
 } elseif ($ip == "update") {
     update();
 } elseif (strpos($ip, '://') !== false) {
-    echo $bold . $red . "\n[!] (HTTP/HTTPS) Detected In Input! Enter URL Without Http/Https\n" . $CURLOPT_RETURNTRANSFER;
+    echo $bold . $red . "\n[!] (HTTP/HTTPS) Detected In Input! Enter URL Without Http/Https\n" . $cln;
     goto thephuckinstart;
 } elseif (strpos($ip, '.') == false) {
     echo $bold . $red . "\n[!] Invalid URL Format! Enter A Valid URL\n" . $cln;
@@ -106,7 +110,7 @@ scanlist:
 
             $lblue Scanning Site : " . $fgreen . $ipsl . $ip . $blue . "
       \n\n";
-    echo $yellow . " [0]  Basic Recon$white (Site Title, IP Address, CMS, Cloudflare Detection, Robots.txt Scanner)$yellow \n [1]  Whois Lookup \n [2]  Geo-IP Lookup \n [3]  Grab Banners \n [4]  DNS Lookup \n [5]  Subnet Calculator \n [6]  NMAP Port Scan \n [7]  Subdomain Scanner \n [8]  Reverse IP Lookup & CMS Detection \n [9]  SQLi Scanner$white (Finds Links With Parameter And Scans For Error Based SQLi)$yellow \n [10] Bloggers View$white (Information That Bloggers Might Be Interested In)$yellow \n [11] WordPress Scan$white (Only If The Target Site Runs On WP)$yellow \n [12] Crawler \n [13] MX Lookup \n [14] Advanced Link Crawler$white (Extracts all links and categorizes them)$yellow \n$magenta [A]  Scan For Everything - (The Old Lame Scanner) \n$blue [F]  Fix (Checks For Required Modules and Installs Missing Ones) \n$fgreen [U]  Check For Updates \n$white [B]  Scan Another Website (Back To Site Selection) \n$red [Q]  Quit! \n\n" . $cln;
+    echo $yellow . " [0]  Basic Recon$white (Site Title, IP Address, CMS, Cloudflare Detection, Robots.txt Scanner)$yellow \n [1]  Whois Lookup \n [2]  Geo-IP Lookup \n [3]  Grab Banners \n [4]  DNS Lookup \n [5]  Subnet Calculator \n [6]  NMAP Port Scan \n [7]  Subdomain Scanner \n [8]  Reverse IP Lookup & CMS Detection \n [9]  SQLi Scanner$white (Finds Links With Parameter And Scans For Error Based SQLi)$yellow \n [10] Bloggers View$white (Information That Bloggers Might Be Interested In)$yellow \n [11] WordPress Scan$white (Only If The Target Site Runs On WP)$yellow \n [12] Crawler \n [13] MX Lookup \n [14] Advanced Link Crawler$white (Extracts all links and categorizes them)$yellow \n [15] Sensitive Information Scanner$white (Finds sensitive files, API keys, emails, etc.)$yellow \n$magenta [A]  Scan For Everything - (The Old Lame Scanner) \n$blue [F]  Fix (Checks For Required Modules and Installs Missing Ones) \n$fgreen [U]  Check For Updates \n$white [B]  Scan Another Website (Back To Site Selection) \n$red [Q]  Quit! \n\n" . $cln;
 
 askscan:
     userinput("Choose Any Scan OR Action From The Above List");
@@ -114,7 +118,7 @@ askscan:
 
     if (!in_array($scan, array(
         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-        '10', '11', '12', '13', '14', 'F', 'f', 'A', 'B', 'U', 'Q', 'a', 'b', 'q', 'u'
+        '10', '11', '12', '13', '14', '15', 'F', 'f', 'A', 'B', 'U', 'Q', 'a', 'b', 'q', 'u'
     ), true)) {
         echo $bold . $red . "\n[!] Invalid Input! Please Enter a Valid Option! \n\n" . $cln;
         goto askscan;
@@ -142,7 +146,7 @@ askscan:
             echo $bold . $lblue . "[iNFO] Web Server: ";
             WEBserver($reallink);
             echo "\n";
-            echo $bold . $lblue . "[iNFO] CMS: \e[92m" . CMSdetect($reallink) . $cln;
+            echo $bold . $lblue . "[iNFO] CMS: \e[92m" . advanced_CMSdetect($reallink) . $cln;
             echo $lblue . $bold . "\n[iNFO] Cloudflare: ";
             cloudflaredetect($lwwww);
             echo $lblue . $bold . "[iNFO] Robots File:$cln ";
@@ -302,7 +306,7 @@ askscan:
                 echo "\n" . $bold . $lblue . "HOSTNAME : " . $fgreen . $izox . $cln;
                 echo "\n" . $bold . $lblue . "IP       : " . $fgreen . gethostbyname($izox) . $cln . "\n";
                 if ($detectcms == "yes") {
-                    echo $lblue . $bold . "CMS      : " . $green . CMSdetect($cmsurl) . $cln . "\n\n";
+                    echo $lblue . $bold . "CMS      : " . $green . advanced_CMSdetect($cmsurl) . $cln . "\n\n";
                 }
             }
             echo "\n\n";
@@ -366,7 +370,7 @@ askscan:
             $test_url_http_code = curl_getinfo($handle, CURLINFO_HTTP_CODE);
             echo $lblue . $bold . "[i] HTTP Response Code : " . $fgreen . $test_url_http_code . "\n";
             echo $lblue . "[i] Site Title: " . $fgreen . getTitle($reallink) . "\n";
-            echo $lblue . "[i] CMS (Content Management System) : " . $fgreen . CMSdetect($reallink) . "\n";
+            echo $lblue . "[i] CMS (Content Management System) : " . $fgreen . advanced_CMSdetect($reallink) . "\n";
             echo $lblue . $bold . "[i] Alexa Global Rank : " . $fgreen . bv_get_alexa_rank($lwwww) . "\n";
             bv_moz_info($lwwww);
             extract_social_links($srccd);
@@ -453,7 +457,7 @@ askscan:
                         echo $lblue . "[i] Release Date        : " . $fgreen . $vuln_array[$wp_c_version]["release_date"] . "\n";
                         echo $lblue . "[i] Changelog URL       : " . $fgreen . $vuln_array[$wp_c_version]["changelog_url"] . "\n";
                         echo $lblue . "[i] Vulnerability Count : " . $fgreen . count($vuln_array[$wp_c_version]["vulnerabilities"]) . "\n";
-                        if (count($vuln_array[$wp_c_version]["vulnerabilities"]) != "0") {
+                        if (count($vuln_array[$wp_c_version["vulnerabilities"]]) != "0") {
                             echo $yellow . "\n\t Version Vulnerabilities \n\t=========================\n\n";
                             $ver_vuln_array = $vuln_array[$wp_c_version]['vulnerabilities'];
                             foreach ($ver_vuln_array as $vuln_s) {
@@ -601,41 +605,59 @@ askscan:
             echo $bold . $yellow . "[S] Scan Type : Advanced Link Crawler" . $cln;
             echo "\n\n";
 
-            // Get all links from the page
-            $html = file_get_contents($reallink);
-            $dom = new DOMDocument();
-            @$dom->loadHTML($html);
-            $links = $dom->getElementsByTagName('a');
+            // Get all links from the page using the advanced function
+            $html = readcontents($reallink);
+            $link_categories = advanced_link_crawl($html, $reallink);
             
-            $internalLinks = [];
-            $externalLinks = [];
-            $resourceLinks = [];
-
-            foreach ($links as $link) {
-                $href = $link->getAttribute('href');
-                if (empty($href)) continue;
-                
-                // Categorize links
-                if (strpos($href, $ip) !== false) {
-                    $internalLinks[] = $href;
-                } elseif (strpos($href, 'http') === 0) {
-                    $externalLinks[] = $href;
-                } else {
-                    $resourceLinks[] = $href;
-                }
-            }
+            $internalLinks = $link_categories['internal'];
+            $externalLinks = $link_categories['external'];
+            $resourceLinks = $link_categories['resources'];
 
             // Display results
             echo $bold . $lblue . "[i] Internal Links Found: " . $green . count($internalLinks) . $cln . "\n";
             echo $bold . $lblue . "[i] External Links Found: " . $green . count($externalLinks) . $cln . "\n";
             echo $bold . $lblue . "[i] Resource Links Found: " . $green . count($resourceLinks) . $cln . "\n\n";
 
-            // Show sample links
-            echo $bold . $yellow . "Sample Internal Links:\n" . $cln;
-            for ($i = 0; $i < min(5, count($internalLinks)); $i++) {
-                echo $green . $internalLinks[$i] . $cln . "\n";
+            // Show all internal links
+            if (count($internalLinks) > 0) {
+                echo $bold . $yellow . "Internal Links:\n" . $cln;
+                foreach ($internalLinks as $link) {
+                    echo $green . $link . $cln . "\n";
+                }
+                echo "\n";
             }
 
+            // Show all external links
+            if (count($externalLinks) > 0) {
+                echo $bold . $yellow . "External Links:\n" . $cln;
+                foreach ($externalLinks as $link) {
+                    echo $blue . $link . $cln . "\n";
+                }
+                echo "\n";
+            }
+
+            // Show all resource links
+            if (count($resourceLinks) > 0) {
+                echo $bold . $yellow . "Resource Links:\n" . $cln;
+                foreach ($resourceLinks as $link) {
+                    echo $magenta . $link . $cln . "\n";
+                }
+                echo "\n";
+            }
+
+            echo "\n" . $bold . $yellow . "[*] Scanning Complete. Press Enter To Continue OR CTRL + C To Stop\n\n";
+            trim(fgets(STDIN, 1024));
+            goto scanlist;
+        } elseif ($scan == "15") {
+            $reallink = $ipsl . $ip;
+            echo "\n$cln" . $lblue . $bold . "[+] Scanning Begins ... \n";
+            echo $blue . $bold . "[i] Scanning Site:\e[92m $ipsl" . "$ip \n";
+            echo $bold . $yellow . "[S] Scan Type : Sensitive Information Scanner" . $cln;
+            echo "\n\n";
+            
+            // Call the sensitive information scanner
+            sensitive_info_scan($reallink, $ipsl, $ip);
+            
             echo "\n" . $bold . $yellow . "[*] Scanning Complete. Press Enter To Continue OR CTRL + C To Stop\n\n";
             trim(fgets(STDIN, 1024));
             goto scanlist;
@@ -716,7 +738,7 @@ askupdate:
             WEBserver($reallink);
             echo "\n";
 
-            echo "$blue" . "[+] CMS: \e[92m" . CMSdetect($reallink) . " \e[0m";
+            echo "$blue" . "[+] CMS: \e[92m" . advanced_CMSdetect($reallink) . " \e[0m";
 
             echo "\n$blue" . "[+] Cloudflare: ";
             cloudflaredetect($reallink);
