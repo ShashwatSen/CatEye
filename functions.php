@@ -300,45 +300,180 @@ function bv_moz_info($url) {
     }
 }
 
-// New function for advanced link crawling
-function advanced_link_crawl($html, $base_url) {
-    $dom = new DOMDocument();
-    @$dom->loadHTML($html);
-    $links = $dom->getElementsByTagName('a');
+// New function for sensitive information scanning
+function sensitive_info_scan($reallink, $ipsl, $ip) {
+    global $bold, $lblue, $fgreen, $red, $yellow, $green, $cln;
     
-    $internalLinks = [];
-    $externalLinks = [];
-    $resourceLinks = [];
+    echo $bold . $lblue . "[+] Scanning for sensitive information...\n\n" . $cln;
     
-    // Extract base domain for comparison
-    $base_domain = parse_url($base_url, PHP_URL_HOST);
+    // 1. Check for common sensitive files
+    $sensitive_files = array(
+        '.env', 'config.php', 'config.bak', 'config.inc.php', 'configuration.php',
+        '.htaccess', '.htpasswd', 'robots.txt', 'web.config', 'phpinfo.php',
+        'backup.zip', 'backup.sql', 'dump.sql', 'database.sql', 'backup.tar',
+        'backup.tar.gz', 'error_log', 'access.log', '.git/config', '.DS_Store',
+        'composer.json', 'package.json', 'yarn.lock', 'Gemfile', 'wp-config.php',
+        'app.config', 'settings.py', 'config.json', 'credentials.json', 'secrets.yml'
+    );
     
-    foreach ($links as $link) {
-        $href = $link->getAttribute('href');
-        if (empty($href)) continue;
+    echo $bold . $yellow . "[1] Checking for sensitive files:\n" . $cln;
+    $found_files = array();
+    
+    foreach ($sensitive_files as $file) {
+        $file_url = $reallink . '/' . $file;
+        $headers = @get_headers($file_url);
         
-        // Resolve relative URLs
-        $absolute_url = resolve_url($href, $base_url);
-        
-        // Categorize links
-        $link_domain = parse_url($absolute_url, PHP_URL_HOST);
-        if ($link_domain === $base_domain) {
-            $internalLinks[] = $absolute_url;
-        } elseif (strpos($absolute_url, 'http') === 0) {
-            $externalLinks[] = $absolute_url;
-        } else {
-            $resourceLinks[] = $absolute_url;
+        if ($headers && strpos($headers[0], '200')) {
+            echo $bold . $red . "   [+] Found: " . $file_url . $cln . "\n";
+            $found_files[] = $file_url;
+            
+            // Try to read the file content if it's text-based
+            if (preg_match('/\.(php|txt|json|yml|js|env|sql|xml|html|log|inc|py|rb)$/i', $file)) {
+                $content = @file_get_contents($file_url);
+                if ($content && strlen($content) > 0 && strlen($content) < 50000) {
+                    echo $bold . $lblue . "   [Content Preview]:\n" . $cln;
+                    echo substr($content, 0, 500) . "\n\n";
+                }
+            }
         }
     }
     
-    return [
-        'internal' => array_unique($internalLinks),
-        'external' => array_unique($externalLinks),
-        'resources' => array_unique($resourceLinks)
-    ];
+    if (empty($found_files)) {
+        echo $bold . $green . "   [-] No sensitive files found\n" . $cln;
+    }
+    
+    // 2. Check for API keys and tokens in page source
+    echo $bold . $yellow . "\n[2] Scanning for API keys and tokens:\n" . $cln;
+    $page_content = readcontents($reallink);
+    
+    // Common API key patterns
+    $patterns = array(
+        '/[aA][pP][iI][_-]?[kK]e?y?[\"\'\\s]*[=:][\"\'\\s]*([a-zA-Z0-9_\-]{20,60})/',
+        '/[sS][eE][cC][rR][eE][tT][\"\'\\s]*[=:][\"\'\\s]*([a-zA-Z0-9_\-]{20,60})/',
+        '/[aA][cC][cC][eE][sS][sS][_-]?[tT]oken?[\"\'\\s]*[=:][\"\'\\s]*([a-zA-Z0-9_\-]{20,60})/',
+        '/[kK]e?y?[\"\'\\s]*[=:][\"\'\\s]*[sS][eE][cC][rR][eE][tT]_?([a-zA-Z0-9_\-]{20,60})/',
+        '/[aA][pP][iI][_-]?[tT]oken?[\"\'\\s]*[=:][\"\'\\s]*([a-zA-Z0-9_\-]{20,60})/',
+        '/[pP][aA][sS][sS][wW]o?r?d?[\"\'\\s]*[=:][\"\'\\s]*([a-zA-Z0-9_\-]{10,40})/',
+        '/[aA][wW][sS][_-]?[aA][cC][cC][eE][sS][sS][_-]?[kK]e?y?[\"\'\\s]*[=:][\"\'\\s]*([A-Z0-9]{20})/',
+        '/[aA][wW][sS][_-]?[sS][eE][cC][rR][eE][tT][_-]?[aA][cC][cC][eE][sS][sS][_-]?[kK]e?y?[\"\'\\s]*[=:][\"\'\\s]*([a-zA-Z0-9_\-]{40})/',
+        '/[sS][eE][cC][rR][eE][tT][_-]?[kK]e?y?[\"\'\\s]*[=:][\"\'\\s]*([a-zA-Z0-9_\-]{40,60})/'
+    );
+    
+    $found_keys = array();
+    foreach ($patterns as $pattern) {
+        if (preg_match_all($pattern, $page_content, $matches)) {
+            foreach ($matches[1] as $key) {
+                if (!in_array($key, $found_keys)) {
+                    echo $bold . $red . "   [+] Potential API key/token found: " . $key . $cln . "\n";
+                    $found_keys[] = $key;
+                }
+            }
+        }
+    }
+    
+    if (empty($found_keys)) {
+        echo $bold . $green . "   [-] No API keys or tokens found\n" . $cln;
+    }
+    
+    // 3. Extract emails from page source
+    echo $bold . $yellow . "\n[3] Extracting email addresses:\n" . $cln;
+    if (preg_match_all('/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/', $page_content, $email_matches)) {
+        $unique_emails = array_unique($email_matches[0]);
+        foreach ($unique_emails as $email) {
+            echo $bold . $lblue . "   [+] Email found: " . $email . $cln . "\n";
+        }
+    } else {
+        echo $bold . $green . "   [-] No email addresses found\n" . $cln;
+    }
+    
+    // 4. Check for hidden endpoints and admin panels
+    echo $bold . $yellow . "\n[4] Checking for hidden endpoints and admin panels:\n" . $cln;
+    $admin_paths = array(
+        'admin', 'administrator', 'wp-admin', 'wp-login.php', 'login', 'logout',
+        'signin', 'signout', 'dashboard', 'controlpanel', 'cp', 'manager',
+        'management', 'console', 'backend', 'secure', 'private', 'config',
+        'configuration', 'settings', 'options', 'debug', 'test', 'api',
+        'oauth', 'auth', 'authentication', 'user', 'users', 'account',
+        'accounts', 'admincp', 'administer', 'administration', 'phpmyadmin',
+        'dbadmin', 'mysql', 'database', 'sql', 'webadmin', 'server', 'cpanel',
+        'whm', 'webmail', 'mail', 'email', 'webmin', 'actuator', 'env', 'info',
+        'status', 'health', 'metrics', 'trace', 'beans', 'dump', 'threaddump',
+        'heapdump', 'logfile', 'jolokia', 'h2-console', 'graphql', 'graphiql',
+        'voyager', 'playground', 'altair', 'swagger', 'swagger-ui', 'openapi',
+        'redoc', 'api-docs', 'doc', 'docs', 'documentation', 'help', 'swagger.json',
+        'swagger.yaml', 'openapi.json', 'openapi.yaml', 'api.json', 'api.yaml'
+    );
+    
+    $found_endpoints = array();
+    foreach ($admin_paths as $path) {
+        $endpoint_url = $reallink . '/' . $path;
+        $headers = @get_headers($endpoint_url);
+        
+        if ($headers && (strpos($headers[0], '200') || strpos($headers[0], '301') || strpos($headers[0], '302'))) {
+            echo $bold . $red . "   [+] Found endpoint: " . $endpoint_url . " (" . $headers[0] . ")" . $cln . "\n";
+            $found_endpoints[] = $endpoint_url;
+        }
+    }
+    
+    if (empty($found_endpoints)) {
+        echo $bold . $green . "   [-] No hidden endpoints found\n" . $cln;
+    }
+    
+    // 5. Check for common backup file patterns
+    echo $bold . $yellow . "\n[5] Checking for backup files:\n" . $cln;
+    $backup_patterns = array(
+        'backup', 'backup.zip', 'backup.rar', 'backup.tar', 'backup.tar.gz',
+        'backup.sql', 'database.zip', 'database.sql', 'dump.sql', 'dump.zip',
+        'www.zip', 'public.zip', 'site.zip', 'web.zip', 'app.zip', 'data.zip',
+        'db.zip', 'db.sql', 'db.dump', 'sql.zip', 'sql.sql', 'sql.dump',
+        'backup_*.zip', 'backup_*.sql', 'backup_*.tar', 'backup_*.tar.gz',
+        '*.bak', '*.old', '*.temp', '*.tmp', '*.backup', '*.save'
+    );
+    
+    $found_backups = array();
+    foreach ($backup_patterns as $pattern) {
+        $backup_url = $reallink . '/' . $pattern;
+        $headers = @get_headers($backup_url);
+        
+        if ($headers && strpos($headers[0], '200')) {
+            echo $bold . $red . "   [+] Found backup file: " . $backup_url . $cln . "\n";
+            $found_backups[] = $backup_url;
+        }
+    }
+    
+    if (empty($found_backups)) {
+        echo $bold . $green . "   [-] No backup files found\n" . $cln;
+    }
+    
+    // 6. Check for exposed directory listings
+    echo $bold . $yellow . "\n[6] Checking for directory listings:\n" . $cln;
+    $dirs_to_check = array('', 'images', 'uploads', 'files', 'assets', 'media', 'docs', 'downloads');
+    
+    foreach ($dirs_to_check as $dir) {
+        $dir_url = $reallink . '/' . $dir;
+        $content = @readcontents($dir_url);
+        
+        if ($content && (
+            strpos($content, 'Index of /') !== false || 
+            strpos($content, 'Directory listing for /') !== false ||
+            strpos($content, '<title>Index of') !== false
+        )) {
+            echo $bold . $red . "   [+] Directory listing enabled: " . $dir_url . $cln . "\n";
+        }
+    }
+    
+    echo $bold . $green . "   [-] No directory listings found\n" . $cln;
+    
+    // Summary
+    echo $bold . $yellow . "\n[+] Sensitive Information Scan Summary:\n" . $cln;
+    echo $bold . $lblue . "   - Sensitive files found: " . count($found_files) . $cln . "\n";
+    echo $bold . $lblue . "   - API keys/tokens found: " . count($found_keys) . $cln . "\n";
+    echo $bold . $lblue . "   - Email addresses found: " . count($unique_emails ?? []) . $cln . "\n";
+    echo $bold . $lblue . "   - Hidden endpoints found: " . count($found_endpoints) . $cln . "\n";
+    echo $bold . $lblue . "   - Backup files found: " . count($found_backups) . $cln . "\n";
 }
 
-// Helper function to resolve relative URLs
+// Additional helper functions for the sensitive information scanner
 function resolve_url($url, $base) {
     // Return if already absolute URL
     if (parse_url($url, PHP_URL_SCHEME) != '') return $url;
@@ -366,7 +501,6 @@ function resolve_url($url, $base) {
     return $abs_url;
 }
 
-// New function to detect additional CMS platforms
 function advanced_CMSdetect($reallink) {
     $cmssc = readcontents($reallink);
     $cms_signatures = [
@@ -400,7 +534,6 @@ function advanced_CMSdetect($reallink) {
     return "\e[91mCould Not Detect";
 }
 
-// Enhanced link display function
 function display_all_links($links, $category) {
     global $bold, $green, $cln;
     
