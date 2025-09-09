@@ -646,7 +646,21 @@ askscan:
             echo "\n" . $bold . $yellow . "[*] Scanning Complete. Press Enter To Continue OR CTRL + C To Stop\n\n";
             trim(fgets(STDIN, 1024));
             goto scanlist;
-        } elseif ($scan == 'U' || $scan == 'u') {
+        } elseif ($scan == "15") {
+            $reallink = $ipsl . $ip;
+            echo "\n$cln" . $lblue . $bold . "[+] Scanning Begins ... \n";
+            echo $blue . $bold . "[i] Scanning Site:\e[92m $ipsl" . "$ip \n";
+            echo $bold . $yellow . "[S] Scan Type : Sensitive Information Scanner" . $cln;
+            echo "\n\n";
+            
+            // Call the sensitive information scanner
+            sensitive_info_scan($reallink, $ipsl, $ip);
+            
+            echo "\n" . $bold . $yellow . "[*] Scanning Complete. Press Enter To Continue OR CTRL + C To Stop\n\n";
+            trim(fgets(STDIN, 1024));
+            goto scanlist;
+        }
+         elseif ($scan == 'U' || $scan == 'u') {
             echo "\n\n" . $bold . $yellow . "-[ CATEYE Update Corner]-\n\n" . $cln;
             echo $bold . "[i] Fetching Stuffs .... \n" . $cln;
             $latestversion = readcontents("https://raw.githubusercontent.com/Tuhinshubhra/RED_HAWK/master/version.txt");
