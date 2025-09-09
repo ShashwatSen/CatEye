@@ -122,10 +122,10 @@ askscan:
     ), true)) {
         echo $bold . $red . "\n[!] Invalid Input! Please Enter a Valid Option! \n\n" . $cln;
         goto askscan;
-    } else {
-         elseif ($scan == 'q' | $scan == 'Q') {
-            echo "\n\n\t Good Bye - Have a nice day :)\n\n";
-            die();
+    }  else {
+        if ($scan == 'q' | $scan == 'Q') {
+        echo "\n\n\t Good Bye - Have a nice day :)\n\n";
+        die();
         } elseif ($scan == 'b' || $scan == 'B') {
             system("clear");
             goto thephuckinstart;
