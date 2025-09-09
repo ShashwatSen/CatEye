@@ -1,5 +1,24 @@
 <?php
 // Functions for CATEYE Web Scanner
+
+// Global color variables
+$white = "\e[0m";
+$bold = "\e[1m";
+$greenbg = "\e[42m";
+$redbg = "\e[41m";
+$bluebg = "\e[44m";
+$cln = "\e[0m";
+$lblue = "\e[94m";
+$fgreen = "\e[92m";
+$red = "\e[91m";
+$blue = "\e[34m";
+$magenta = "\e[35m";
+$orange = "\e[38;5;208m";
+$green = "\e[32m";
+$grey = "\e[90m";
+$cyan = "\e[36m";
+$yellow = "\e[93m";
+
 function getTitle($url) {
     $data = readcontents($url);
     $title = preg_match('/<title[^>]*>(.*?)<\/title>/ims', $data, $matches) ? $matches[1] : null;
@@ -69,6 +88,39 @@ function CMSdetect($reallink) {
         }
     }
     return $tcms;
+}
+
+function advanced_CMSdetect($reallink) {
+    $cmssc = readcontents($reallink);
+    $cms_signatures = [
+        'WordPress' => ['/wp-content/', 'content="WordPress', 'wp-includes/'],
+        'Joomla' => ['/joomla/', 'Joomla!', 'content="Joomla'],
+        'Drupal' => ['Drupal', 'drupal.js'],
+        'Magento' => ['/skin/frontend/', 'Magento'],
+        'Shopify' => ['shopify', 'cdn.shopify.com'],
+        'Wix' => ['wix.com', 'wix-domain.net'],
+        'Squarespace' => ['squarespace', 'static.squarespace.com'],
+        'Blogger' => ['blogger.com', 'blogspot.com'],
+        'Ghost' => ['ghost.org', 'content="Ghost'],
+        'TYPO3' => ['typo3', 'TYPO3'],
+        'PrestaShop' => ['prestashop', 'PrestaShop'],
+        'OpenCart' => ['opencart', 'OpenCart'],
+        'WooCommerce' => ['woocommerce', 'WooCommerce'],
+        'BigCommerce' => ['bigcommerce', 'bigcommerce.com'],
+        'Moodle' => ['moodle', 'Moodle'],
+        'MediaWiki' => ['mediawiki', 'MediaWiki'],
+        'phpBB' => ['phpbb', 'phpBB'],
+    ];
+    
+    foreach ($cms_signatures as $cms => $signatures) {
+        foreach ($signatures as $signature) {
+            if (strpos($cmssc, $signature) !== false) {
+                return $cms;
+            }
+        }
+    }
+    
+    return "\e[91mCould Not Detect";
 }
 
 function robotsdottxt($reallink) {
@@ -300,7 +352,6 @@ function bv_moz_info($url) {
     }
 }
 
-// New function for sensitive information scanning
 function sensitive_info_scan($reallink, $ipsl, $ip) {
     global $bold, $lblue, $fgreen, $red, $yellow, $green, $cln;
     
@@ -473,7 +524,6 @@ function sensitive_info_scan($reallink, $ipsl, $ip) {
     echo $bold . $lblue . "   - Backup files found: " . count($found_backups) . $cln . "\n";
 }
 
-// Additional helper functions for the sensitive information scanner
 function resolve_url($url, $base) {
     // Return if already absolute URL
     if (parse_url($url, PHP_URL_SCHEME) != '') return $url;
@@ -501,37 +551,49 @@ function resolve_url($url, $base) {
     return $abs_url;
 }
 
-function advanced_CMSdetect($reallink) {
-    $cmssc = readcontents($reallink);
-    $cms_signatures = [
-        'WordPress' => ['/wp-content/', 'content="WordPress', 'wp-includes/'],
-        'Joomla' => ['/joomla/', 'Joomla!', 'content="Joomla'],
-        'Drupal' => ['Drupal', 'drupal.js'],
-        'Magento' => ['/skin/frontend/', 'Magento'],
-        'Shopify' => ['shopify', 'cdn.shopify.com'],
-        'Wix' => ['wix.com', 'wix-domain.net'],
-        'Squarespace' => ['squarespace', 'static.squarespace.com'],
-        'Blogger' => ['blogger.com', 'blogspot.com'],
-        'Ghost' => ['ghost.org', 'content="Ghost'],
-        'TYPO3' => ['typo3', 'TYPO3'],
-        'PrestaShop' => ['prestashop', 'PrestaShop'],
-        'OpenCart' => ['opencart', 'OpenCart'],
-        'WooCommerce' => ['woocommerce', 'WooCommerce'],
-        'BigCommerce' => ['bigcommerce', 'bigcommerce.com'],
-        'Moodle' => ['moodle', 'Moodle'],
-        'MediaWiki' => ['mediawiki', 'MediaWiki'],
-        'phpBB' => ['phpbb', 'phpBB'],
-    ];
+function advanced_link_crawl($html, $base_url) {
+    $dom = new DOMDocument;
+    @$dom->loadHTML($html);
     
-    foreach ($cms_signatures as $cms => $signatures) {
-        foreach ($signatures as $signature) {
-            if (strpos($cmssc, $signature) !== false) {
-                return $cms;
+    $internal_links = array();
+    $external_links = array();
+    $resource_links = array();
+    
+    // Get all links
+    $links = $dom->getElementsByTagName('a');
+    foreach ($links as $link) {
+        $href = $link->getAttribute('href');
+        if (!empty($href) && $href !== '#') {
+            $absolute_url = resolve_url($href, $base_url);
+            
+            if (strpos($absolute_url, $base_url) !== false) {
+                $internal_links[] = $absolute_url;
+            } else {
+                $external_links[] = $absolute_url;
             }
         }
     }
     
-    return "\e[91mCould Not Detect";
+    // Get all resource links (images, scripts, styles)
+    $tags = array('img' => 'src', 'script' => 'src', 'link' => 'href');
+    foreach ($tags as $tag => $attribute) {
+        $elements = $dom->getElementsByTagName($tag);
+        foreach ($elements as $element) {
+            if ($element->hasAttribute($attribute)) {
+                $src = $element->getAttribute($attribute);
+                if (!empty($src)) {
+                    $absolute_src = resolve_url($src, $base_url);
+                    $resource_links[] = $absolute_src;
+                }
+            }
+        }
+    }
+    
+    return array(
+        'internal' => array_unique($internal_links),
+        'external' => array_unique($external_links),
+        'resources' => array_unique($resource_links)
+    );
 }
 
 function display_all_links($links, $category) {
