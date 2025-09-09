@@ -116,7 +116,7 @@ askscan:
 
     if (!in_array($scan, array(
         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-        '10', '11', '12', '13', '14', 'F', 'f', 'A', 'B', 'U', 'Q', 'a', 'b', 'q', 'u'
+        '10', '11', '12', '13', '14', '15','F', 'f', 'A', 'B', 'U', 'Q', 'a', 'b', 'q', 'u'
     ), true)) {
         echo $bold . $red . "\n[!] Invalid Input! Please Enter a Valid Option! \n\n" . $cln;
         goto askscan;
